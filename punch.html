@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0f172a">
+  <title>Entretiens AR — Punch</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #273449;
+      --border: #334155;
+      --accent: #3b82f6;
+      --accent-dark: #2563eb;
+      --success: #22c55e;
+      --success-dark: #16a34a;
+      --danger: #ef4444;
+      --danger-dark: #dc2626;
+      --warning: #f59e0b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --radius: 14px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.3px;
+    }
+
+    .logo span { color: var(--text); }
+
+    .date-pill {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Main content ── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 20px;
+      gap: 20px;
+      max-width: 480px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ── Employee selector ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .card-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 13px 16px;
+      font-size: 1rem;
+      font-family: inherit;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      cursor: pointer;
+    }
+
+    select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* ── Status card ── */
+    .status-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .status-indicator {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--border);
+      display: inline-block;
+      margin-bottom: 12px;
+      transition: background 0.3s;
+    }
+
+    .status-indicator.active {
+      background: var(--success);
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2); }
+      50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0.1); }
+    }
+
+    .status-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .timer {
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .punch-in-time {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ── GPS status ── */
+    .gps-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .gps-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+
+    .gps-dot.ok { background: var(--success); }
+    .gps-dot.warn { background: var(--warning); }
+    .gps-dot.err { background: var(--danger); }
+
+    /* ── Action buttons ── */
+    .btn {
+      width: 100%;
+      padding: 18px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform 0.1s, filter 0.1s, opacity 0.2s;
+      letter-spacing: 0.01em;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .btn-punch-in {
+      background: var(--success);
+      color: #fff;
+    }
+    .btn-punch-in:not(:disabled):hover { filter: brightness(1.1); }
+
+    .btn-punch-out {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-punch-out:not(:disabled):hover { filter: brightness(1.1); }
+
+    .btn-send-pos {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 13px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .btn-send-pos:not(:disabled):hover { background: var(--surface); }
+
+    /* ── History ── */
+    .history {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .history-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .history-list {
+      padding: 0;
+      list-style: none;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+
+    .history-item:last-child { border-bottom: none; }
+
+    .history-event {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+    }
+
+    .history-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .badge-in { background: rgba(34,197,94,0.15); color: var(--success); }
+    .badge-out { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .badge-gps { background: rgba(59,130,246,0.15); color: var(--accent); }
+
+    .history-time { font-size: 0.78rem; color: var(--text-muted); }
+
+    /* ── Toast ── */
+    .toast-container {
+      position: fixed;
+      bottom: max(24px, env(safe-area-inset-bottom, 24px));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 0.88rem;
+      color: var(--text);
+      white-space: nowrap;
+      pointer-events: none;
+      animation: toastIn 0.25s ease, toastOut 0.3s ease 2.7s forwards;
+    }
+
+    .toast.success { border-color: var(--success); color: var(--success); }
+    .toast.error { border-color: var(--danger); color: var(--danger); }
+    .toast.info { border-color: var(--accent); color: var(--accent); }
+
+    @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+
+    /* ── Loading overlay ── */
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 100;
+    }
+
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #loading-text { font-size: 0.9rem; color: var(--text-muted); }
+
+    /* ── Empty/error state ── */
+    .empty-state {
+      text-align: center;
+      padding: 32px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state svg { margin-bottom: 12px; opacity: 0.4; }
+    .empty-state p { font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div id="loading-text">Chargement…</div>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="logo">Entretiens <span>AR</span></div>
+  <div class="date-pill" id="date-display">—</div>
+</header>
+
+<!-- Main content -->
+<main id="main-content" style="display:none;">
+
+  <!-- Employee selector -->
+  <div class="card">
+    <div class="card-label">Employé</div>
+    <select id="emp-select">
+      <option value="">— Sélectionner —</option>
+    </select>
+  </div>
+
+  <!-- Status / timer -->
+  <div class="status-card" id="status-card">
+    <div class="status-indicator" id="status-dot"></div>
+    <div class="status-text" id="status-text">Pas punchée</div>
+    <div class="timer" id="timer-display">00:00:00</div>
+    <div class="punch-in-time" id="punch-in-label"></div>
+  </div>
+
+  <!-- GPS bar -->
+  <div class="gps-bar">
+    <div class="gps-dot" id="gps-dot"></div>
+    <span id="gps-label">GPS non initialisé</span>
+  </div>
+
+  <!-- Action buttons -->
+  <button class="btn btn-punch-in" id="btn-in" disabled>⏱ Punch In</button>
+  <button class="btn btn-punch-out" id="btn-out" disabled style="display:none;">⏹ Punch Out</button>
+  <button class="btn btn-send-pos" id="btn-pos" disabled>📍 Envoyer ma position</button>
+
+  <!-- History -->
+  <div class="history" id="history-section">
+    <div class="history-header">Historique d'aujourd'hui</div>
+    <ul class="history-list" id="history-list">
+      <li class="empty-state"><p>Aucune activité</p></li>
+    </ul>
+  </div>
+
+</main>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+  /* ═══════════════════════════════════════════
+     CONFIG
+  ═══════════════════════════════════════════ */
+  const DB_URL = 'https://punch-entretiens-ar-default-rtdb.firebaseio.com';
+  const GPS_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+
+  /* ═══════════════════════════════════════════
+     STATE
+  ═══════════════════════════════════════════ */
+  let state = {
+    employe: null,
+    punchedIn: false,
+    punchInTime: null,   // ISO string
+    punchInTs: null,     // timestamp ms
+    timerInterval: null,
+    gpsInterval: null,
+    lastPos: null,
+    todayKey: null,
+    log: []              // [{type, time, label}]
+  };
+
+  /* ═══════════════════════════════════════════
+     UTILS
+  ═══════════════════════════════════════════ */
+  function today() {
+    const d = new Date();
+    return d.toISOString().slice(0, 10);
+  }
+
+  function nowHHMM() {
+    return new Date().toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
+  function formatElapsed(ms) {
+    const s = Math.floor(ms / 1000);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  }
+
+  function showToast(msg, type = 'info') {
+    const tc = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    tc.appendChild(t);
+    setTimeout(() => t.remove(), 3200);
+  }
+
+  /* ═══════════════════════════════════════════
+     FIREBASE REST
+  ═══════════════════════════════════════════ */
+  async function fbGet(path) {
+    const res = await fetch(`${DB_URL}/${path}.json`);
+    if (!res.ok) throw new Error(`Firebase GET ${path}: ${res.status}`);
+    return res.json();
+  }
+
+  async function fbPut(path, data) {
+    const res = await fetch(`${DB_URL}/${path}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(`Firebase PUT ${path}: ${res.status}`);
+    return res.json();
+  }
+
+  async function fbPatch(path, data) {
+    const res = await fetch(`${DB_URL}/${path}.json`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(`Firebase PATCH ${path}: ${res.status}`);
+    return res.json();
+  }
+
+  async function fbPost(path, data) {
+    const res = await fetch(`${DB_URL}/${path}.json`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(`Firebase POST ${path}: ${res.status}`);
+    return res.json();
+  }
+
+  /* ═══════════════════════════════════════════
+     GPS
+  ═══════════════════════════════════════════ */
+  function updateGpsUI(status, msg) {
+    const dot = document.getElementById('gps-dot');
+    const lbl = document.getElementById('gps-label');
+    dot.className = 'gps-dot ' + status; // ok | warn | err
+    lbl.textContent = msg;
+  }
+
+  function getPosition() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Géolocalisation non disponible'));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 60000
+      });
+    });
+  }
+
+  async function sendPosition(type = 'periodic') {
+    if (!state.employe || !state.punchedIn) return;
+    updateGpsUI('warn', 'Localisation en cours…');
+    try {
+      const pos = await getPosition();
+      const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+      state.lastPos = { lat, lng, accuracy, time: new Date().toISOString() };
+
+      const empKey = safeKey(state.employe);
+      const dayKey = state.todayKey;
+      const tsKey = Date.now();
+
+      // Store position in positions log
+      await fbPut(`presence/${dayKey}/${empKey}/positions/${tsKey}`, {
+        lat, lng, accuracy,
+        time: new Date().toISOString(),
+        type
+      });
+
+      // Update lastPos on presence record
+      await fbPatch(`presence/${dayKey}/${empKey}`, {
+        lastPos: { lat, lng, accuracy, time: new Date().toISOString() }
+      });
+
+      updateGpsUI('ok', `GPS OK · précision ${Math.round(accuracy)}m · ${nowHHMM()}`);
+      addLog('gps', `Position envoyée (${type})`);
+    } catch (err) {
+      updateGpsUI('err', 'Erreur GPS : ' + (err.message || 'inconnu'));
+      showToast('Impossible d\'obtenir la position GPS', 'error');
+    }
+  }
+
+  function safeKey(name) {
+    // Firebase keys cannot contain . $ # [ ] /
+    return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[.#$\[\]/]/g, '_')
+      .replace(/\s+/g, '_');
+  }
+
+  /* ═══════════════════════════════════════════
+     TIMER
+  ═══════════════════════════════════════════ */
+  function startTimer() {
+    if (state.timerInterval) clearInterval(state.timerInterval);
+    state.timerInterval = setInterval(() => {
+      const elapsed = Date.now() - state.punchInTs;
+      document.getElementById('timer-display').textContent = formatElapsed(elapsed);
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (state.timerInterval) clearInterval(state.timerInterval);
+    state.timerInterval = null;
+  }
+
+  /* ═══════════════════════════════════════════
+     LOG
+  ═══════════════════════════════════════════ */
+  function addLog(type, label) {
+    const entry = { type, label, time: nowHHMM() };
+    state.log.unshift(entry);
+    renderLog();
+  }
+
+  function renderLog() {
+    const ul = document.getElementById('history-list');
+    if (state.log.length === 0) {
+      ul.innerHTML = '<li class="empty-state"><p>Aucune activité</p></li>';
+      return;
+    }
+    ul.innerHTML = state.log.slice(0, 20).map(e => `
+      <li class="history-item">
+        <div class="history-event">
+          <span class="history-badge badge-${e.type}">${
+            e.type === 'in' ? 'IN' : e.type === 'out' ? 'OUT' : 'GPS'
+          }</span>
+          ${e.label}
+        </div>
+        <span class="history-time">${e.time}</span>
+      </li>
+    `).join('');
+  }
+
+  /* ═══════════════════════════════════════════
+     UI STATE MACHINE
+  ═══════════════════════════════════════════ */
+  function setUIState(punchedIn, empSelected) {
+    const btnIn  = document.getElementById('btn-in');
+    const btnOut = document.getElementById('btn-out');
+    const btnPos = document.getElementById('btn-pos');
+    const dot    = document.getElementById('status-dot');
+    const stText = document.getElementById('status-text');
+    const pinLbl = document.getElementById('punch-in-label');
+
+    if (!empSelected) {
+      btnIn.disabled = true;
+      btnOut.style.display = 'none';
+      btnIn.style.display = 'block';
+      btnPos.disabled = true;
+      dot.classList.remove('active');
+      stText.textContent = 'Sélectionner un employé';
+      return;
+    }
+
+    if (punchedIn) {
+      btnIn.style.display = 'none';
+      btnOut.style.display = 'block';
+      btnOut.disabled = false;
+      btnPos.disabled = false;
+      dot.classList.add('active');
+      stText.textContent = 'En cours de travail';
+      if (state.punchInTime) {
+        pinLbl.textContent = `Punch in : ${state.punchInTime}`;
+      }
+    } else {
+      btnIn.style.display = 'block';
+      btnOut.style.display = 'none';
+      btnIn.disabled = false;
+      btnPos.disabled = true;
+      dot.classList.remove('active');
+      stText.textContent = 'Pas punchée';
+      pinLbl.textContent = '';
+      document.getElementById('timer-display').textContent = '00:00:00';
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     LOAD EMPLOYEE DATA FOR TODAY
+  ═══════════════════════════════════════════ */
+  async function loadTodayData(empName) {
+    const empKey = safeKey(empName);
+    const dayKey = state.todayKey;
+    try {
+      const data = await fbGet(`presence/${dayKey}/${empKey}`);
+      if (data && data.statut === 'in' && data.punchIn) {
+        // Resume active session
+        state.punchedIn = true;
+        state.punchInTime = data.punchIn;
+        // Reconstruct punchInTs from today's date + HH:MM
+        const [h, m] = data.punchIn.split(':').map(Number);
+        const d = new Date();
+        d.setHours(h, m, 0, 0);
+        state.punchInTs = d.getTime();
+        startTimer();
+        setUIState(true, true);
+        showToast(`Session en cours reprise depuis ${data.punchIn}`, 'info');
+        addLog('in', `Reprise session (punch in ${data.punchIn})`);
+      } else {
+        setUIState(false, true);
+      }
+    } catch (e) {
+      // No data for today, fresh start
+      setUIState(false, true);
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     PUNCH IN
+  ═══════════════════════════════════════════ */
+  async function punchIn() {
+    const empName = state.employe;
+    const empKey  = safeKey(empName);
+    const dayKey  = state.todayKey;
+    const hhmm    = nowHHMM();
+
+    document.getElementById('btn-in').disabled = true;
+
+    try {
+      // Get GPS first (best effort)
+      let posPayload = null;
+      updateGpsUI('warn', 'Localisation en cours…');
+      try {
+        const pos = await getPosition();
+        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+        posPayload = { lat, lng, accuracy, time: new Date().toISOString() };
+        state.lastPos = posPayload;
+        updateGpsUI('ok', `GPS OK · précision ${Math.round(accuracy)}m`);
+      } catch (gpsErr) {
+        updateGpsUI('err', 'GPS indisponible au punch in');
+      }
+
+      const tsKey = Date.now();
+
+      // Write presence record
+      const presenceData = {
+        statut: 'in',
+        employe: empName,
+        punchIn: hhmm,
+        punchOut: null,
+        heures: null,
+        lastPos: posPayload
+      };
+
+      await fbPut(`presence/${dayKey}/${empKey}`, presenceData);
+
+      // Log the punch in position
+      if (posPayload) {
+        await fbPut(`presence/${dayKey}/${empKey}/positions/${tsKey}`, {
+          ...posPayload, type: 'punchIn'
+        });
+      }
+
+      state.punchedIn  = true;
+      state.punchInTime = hhmm;
+      state.punchInTs  = Date.now();
+
+      startTimer();
+
+      // Start hourly GPS tracking
+      state.gpsInterval = setInterval(() => sendPosition('periodic'), GPS_INTERVAL_MS);
+
+      setUIState(true, true);
+      addLog('in', `Punch in à ${hhmm}`);
+      showToast(`Punch in enregistré à ${hhmm}`, 'success');
+
+    } catch (err) {
+      console.error('Punch in error:', err);
+      document.getElementById('btn-in').disabled = false;
+      showToast('Erreur lors du punch in', 'error');
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     PUNCH OUT
+  ═══════════════════════════════════════════ */
+  async function punchOut() {
+    const empName = state.employe;
+    const empKey  = safeKey(empName);
+    const dayKey  = state.todayKey;
+    const hhmm    = nowHHMM();
+
+    document.getElementById('btn-out').disabled = true;
+
+    try {
+      // Final GPS
+      let posPayload = null;
+      updateGpsUI('warn', 'Localisation en cours…');
+      try {
+        const pos = await getPosition();
+        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+        posPayload = { lat, lng, accuracy, time: new Date().toISOString() };
+        state.lastPos = posPayload;
+        updateGpsUI('ok', `GPS OK · précision ${Math.round(accuracy)}m`);
+      } catch { updateGpsUI('err', 'GPS indisponible au punch out'); }
+
+      stopTimer();
+      if (state.gpsInterval) { clearInterval(state.gpsInterval); state.gpsInterval = null; }
+
+      // Calculate hours
+      const elapsedMs = Date.now() - state.punchInTs;
+      const heures = Math.round((elapsedMs / 3600000) * 100) / 100;
+
+      const tsKey = Date.now();
+      const updates = { statut: 'out', punchOut: hhmm, heures, lastPos: posPayload };
+      await fbPatch(`presence/${dayKey}/${empKey}`, updates);
+
+      if (posPayload) {
+        await fbPut(`presence/${dayKey}/${empKey}/positions/${tsKey}`, {
+          ...posPayload, type: 'punchOut'
+        });
+      }
+
+      state.punchedIn = false;
+      setUIState(false, true);
+      addLog('out', `Punch out à ${hhmm} — ${heures.toFixed(2)}h`);
+      showToast(`Punch out : ${heures.toFixed(2)}h enregistrées`, 'success');
+
+    } catch (err) {
+      console.error('Punch out error:', err);
+      document.getElementById('btn-out').disabled = false;
+      showToast('Erreur lors du punch out', 'error');
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     EMPLOYEE SELECT
+  ═══════════════════════════════════════════ */
+  async function onEmployeeChange(empName) {
+    // Reset state
+    if (state.timerInterval) stopTimer();
+    if (state.gpsInterval) { clearInterval(state.gpsInterval); state.gpsInterval = null; }
+    state.punchedIn = false;
+    state.punchInTime = null;
+    state.punchInTs = null;
+    state.log = [];
+    renderLog();
+    document.getElementById('timer-display').textContent = '00:00:00';
+    document.getElementById('punch-in-label').textContent = '';
+
+    if (!empName) {
+      state.employe = null;
+      setUIState(false, false);
+      return;
+    }
+
+    state.employe = empName;
+    setUIState(false, true);
+    await loadTodayData(empName);
+  }
+
+  /* ═══════════════════════════════════════════
+     INIT
+  ═══════════════════════════════════════════ */
+  async function init() {
+    state.todayKey = today();
+
+    // Display date
+    const dateEl = document.getElementById('date-display');
+    dateEl.textContent = new Date().toLocaleDateString('fr-CA', {
+      weekday: 'short', day: 'numeric', month: 'short'
+    });
+
+    // Load employees from Firebase
+    const loadingText = document.getElementById('loading-text');
+    loadingText.textContent = 'Connexion à Firebase…';
+
+    try {
+      const employes = await fbGet('employes_actifs');
+      const sel = document.getElementById('emp-select');
+
+      if (employes && typeof employes === 'object') {
+        const noms = Object.keys(employes).sort();
+        noms.forEach(nom => {
+          const opt = document.createElement('option');
+          opt.value = nom;
+          // Decode the safe key back to original name if stored
+          opt.textContent = employes[nom].nom || nom;
+          sel.appendChild(opt);
+        });
+      } else {
+        // Fallback: no employees in Firebase yet
+        const opt = document.createElement('option');
+        opt.value = '' ; opt.disabled = true;
+        opt.textContent = 'Aucun employé trouvé';
+        sel.appendChild(opt);
+      }
+
+      // Employee change listener
+      sel.addEventListener('change', e => onEmployeeChange(e.target.value));
+
+      // Button listeners
+      document.getElementById('btn-in').addEventListener('click', punchIn);
+      document.getElementById('btn-out').addEventListener('click', punchOut);
+      document.getElementById('btn-pos').addEventListener('click', () => sendPosition('manual'));
+
+      // Auto-send GPS when app comes back to foreground
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && state.punchedIn) {
+          sendPosition('foreground');
+        }
+      });
+
+      // Show UI
+      document.getElementById('loading-overlay').style.display = 'none';
+      document.getElementById('main-content').style.display = 'flex';
+
+      setUIState(false, false);
+
+    } catch (err) {
+      console.error('Init error:', err);
+      loadingText.textContent = '⚠️ Erreur de connexion — vérifiez votre réseau';
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
