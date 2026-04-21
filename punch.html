@@ -444,7 +444,10 @@
   ═══════════════════════════════════════════ */
   function today() {
     const d = new Date();
-    return d.toISOString().slice(0, 10);
+    // Utiliser la date LOCALE (pas UTC) pour correspondre à ar-manager.html
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
   }
 
   function nowHHMM() {
